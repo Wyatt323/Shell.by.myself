@@ -3,7 +3,7 @@
 dir=/root/Docker
 
 # 定义压缩后的文件名
-filename=Docker$(date +%Y-%m-%d-%H).tar.gz
+filename=Docker$(date +%Y-%m-%d-%Hh).tar.gz
 
 # 压缩目录
 tar -czvf $filename $dir/*
