@@ -6,12 +6,19 @@ EMAIL="YOUR_Cloudflare_EMAIL"
 ZONE_ID="YOUR_Cloudflare_ZONE_ID"
 RECORD_NAME="YOUR_Cloudflare_Domain"
 
+TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN"
+TELEGRAM_CHAT_ID="YOUR_CHAT_ID"
+TELEGRAM_ENABLED="1"
+
+TZ='Asia/Shanghai'
+now_time=$(date +'%Y-%m-%d %H:%M:%S')
+
 # Ping结果保存文件路径
 PING_FILE="/root/cf/ip.txt"
 
 # 待PING的IP地址范围
 START_IP="X.X.X.1"
-END_IP="X.X.X.255"
+END_IP="X.X.X.252"
 
 # 数组变量用于存储可成功ping通的IP地址及其延迟
 declare -A ping_results
@@ -25,6 +32,17 @@ PING_RESULT=$(ping -c 1 -W 1 "$ip_old" | grep -oP "(?<=time=)[0-9]+" 2>/dev/null
 
 if [ -n "$PING_RESULT" ]; then
   echo "目前域名指向的IP可达，脚本结束运行"
+  # 是否启用通知
+   if [[ "$TELEGRAM_ENABLED" == "1" ]]; then
+     echo "Telegram通知已启用"
+      # 发送Telegram通知。
+       message="$now_time"
+       message+=" %0A 🎉目前$RECORD_NAME指向的IP:$ip_old可达 "
+       telegram_url="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage?chat_id=$TELEGRAM_CHAT_ID&text=$message"
+       curl -s "$telegram_url" >/dev/null
+   else
+     echo "Telegram通知未启用"
+   fi
   exit 0
 else
   echo "目前域名指向的IP不可达，继续执行脚本"
@@ -90,6 +108,19 @@ SUCCESS=$(echo "$RESPONSE" | grep -oP "\"success\":\\K[^,]+")
 
 if [ "$SUCCESS" = "true" ]; then
   echo "IP地址更新成功"
+  # 是否启用通知
+    if [[ "$TELEGRAM_ENABLED" == "1" ]]; then
+      echo "Telegram通知已启用"
+       # 发送Telegram通知。
+        message="$now_time"
+        message+="🎉目前$RECORD_NAME指向的IP:$ip_old不可达"
+        message+="已经将新的IP:$IP_ADDRESS解析到该域名中"
+        telegram_url="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage?chat_id=$TELEGRAM_CHAT_ID&text=$message"
+        curl -s "$telegram_url" >/dev/null
+    else
+      echo "Telegram通知未启用"
+    fi
 else
   echo "IP地址更新失败"
 fi
+
